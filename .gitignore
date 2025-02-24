@@ -2,5 +2,5 @@
 venv/
 *.pyc
 __pycache__/
-source/'
+source/
 .idea/
