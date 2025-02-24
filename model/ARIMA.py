@@ -5,7 +5,7 @@ from sklearn import metrics
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
-
+from util.utils import evaluation_metric
 """
 数据集文件来自沪深股票的每日指标类型
 """
@@ -80,7 +80,7 @@ if result[1] > 0.05:
 else:
     print("数据已平稳，无需差分处理。")
 
-# 绘制ACF和PACF图，帮助选择p和q
+# 绘制ACF和PACF图，选择p和q
 temp1 = np.diff(train_set['close'], n=1)
 plot_acf(temp1)
 plot_pacf(temp1)
@@ -105,7 +105,7 @@ predictions1 = {
 }
 predictions1 = pd.DataFrame(predictions1)
 predictions1 = predictions1.set_index(['trade_date'], drop=True)
-predictions1.to_csv('./ARIMA.csv')
+predictions1.to_csv('../temp/ARIMA.csv')
 plt.figure(figsize=(10, 6))
 plt.plot(test_set['close'], label='Stock Price')
 plt.plot(predictions1, label='Predicted Stock Price')
@@ -116,20 +116,6 @@ plt.legend()
 plt.show()
 
 # 计算误差指标
-def evaluation_metric(y_test,y_hat):
-    MSE = metrics.mean_squared_error(y_test, y_hat)
-    RMSE = np.sqrt(MSE)
-    MAE = metrics.mean_absolute_error(y_test,y_hat)
-    R2 = metrics.r2_score(y_test,y_hat)
-    print('MSE: %.5f' % MSE)
-    print('RMSE: %.5f' % RMSE)
-    print('MAE: %.5f' % MAE)
-    print('R2: %.5f' % R2)
-    # MSE: 0.00027
-    # RMSE: 0.01633
-    # MAE: 0.01184
-    # R2: 0.84370
-
 evaluation_metric(test_set['close'], predictions)
 
 # 拟合ARIMA模型并提取残差
@@ -139,4 +125,4 @@ fig, ax = plt.subplots(1, 2)
 residuals.plot(title="Residuals", ax=ax[0])
 residuals.plot(kind='kde', title='Density', ax=ax[1])
 plt.show()
-residuals.to_csv('./ARIMA_residuals1.csv')
+residuals.to_csv('../temp/ARIMA_residuals1.csv')
