@@ -25,12 +25,12 @@ def reset_index_for_dataset(dataset):
     return dataset
 
 # 划分训练集和测试集
-split_radio = 0.95    # 选取前split_radio数据为训练集，后(1 - split_radio)数据为测试集
+split_radio = 0.95    # 选取前95%数据为训练集，后5%数据为测试集
 
 train_set = data.loc[:int(dataSize*split_radio)]
 train_set = reset_index_for_dataset(train_set)
 
-test_set = data.loc[int(dataSize*split_radio):]
+test_set = data.loc[int(dataSize*split_radio)+1:]
 test_set = reset_index_for_dataset(test_set)
 
 data = reset_index_for_dataset(data)
