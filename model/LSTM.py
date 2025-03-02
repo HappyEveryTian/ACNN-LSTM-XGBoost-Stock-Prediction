@@ -74,12 +74,15 @@ data.index = pd.to_datetime(data['trade_date'])
 data = data.drop('trade_date', axis=1)
 
 Lt = pd.read_csv('../temp/ARIMA.csv')
-idx = 3500
+# 划分训练集和测试集
+dataSize = yuan_data.shape[0]
+split_radio = 0.95
+idx = int(dataSize*split_radio)
 
 # 数据集划分
-training_set = data.iloc[1:idx, :]
+training_set = data.iloc[:idx, :]
 test_set = data.iloc[idx:, :]
-yuan_training_set = yuan_data.iloc[1:idx, :]
+yuan_training_set = yuan_data.iloc[:idx, :]
 yuan_test_set = yuan_data.iloc[idx:, :]
 
 # 数据归一化
@@ -197,7 +200,7 @@ finalpredicted_stock_price = finalpredicted_stock_price.drop(['trade_date'], axi
 # 绘制预测结果图与实际结果图进行模型预测分析
 plt.figure(figsize=(10, 6))
 # print('yuan_real', yuan_real_stock_price1)
-plt.plot(yuan_data.loc['2021-06-22':, 'close'], label='Stock Price')
+plt.plot(yuan_data.iloc[idx:, :]['close'], label='Stock Price')
 plt.plot(finalpredicted_stock_price['close'], label='Predicted Stock Price')
 plt.title('BiLSTM: Stock Price Prediction with ARIMA Residuals')
 plt.xlabel('Time', fontsize=12, verticalalignment='top')
@@ -214,6 +217,6 @@ plt.ylabel('Close', fontsize=14, horizontalalignment='center')
 plt.legend()
 plt.show()
 
-yhat = yuan_data.loc['2021-06-22':, 'close']
+yhat = yuan_data.iloc[idx:, :]['close']
 # 模型评估
-# evaluation_metric(finalpredicted_stock_price['close'], yhat)
+evaluation_metric(finalpredicted_stock_price['close'], yhat)
