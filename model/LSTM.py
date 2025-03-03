@@ -7,7 +7,7 @@ from keras.models import Sequential
 from keras.optimizers import Adam
 from numpy.random import seed
 from sklearn.preprocessing import MinMaxScaler
-from util.utils import evaluation_metric
+from util.utils import evaluation_metric, create_data_index
 
 # 检查是否有可用的 GPU 设备。如果有，设置 GPU 内存动态增长，避免一次性占用所有 GPU 内存，并只使用第一块 GPU
 gpus = tf.config.experimental.list_physical_devices("GPU")
@@ -23,6 +23,7 @@ def lstm(model_type, X_train, yuan_X_train):
     #            1. single-layer LSTM
     #            2. multi-layer LSTM
     #            3. bidirectional LSTM
+    global residual_lstm_model
     if model_type == 1:
         # 单层 LSTM
         residual_lstm_model = Sequential()
@@ -61,10 +62,13 @@ def lstm(model_type, X_train, yuan_X_train):
     return residual_lstm_model, original_lstm_model
 
 # 设置LSTM模型类型及参数
-n_timestamp = 10
-n_epochs = 50
-model_type = 3
+n_timestamp = 10    # 时间步
+n_features = 1      # 特征
+n_epochs = 50       # 训练轮数
+n_batch = 32        # 批次
+model_type = 3      # 模型类型
 
+# 读取数据
 yuan_data = pd.read_csv('../dataset/601988.SH.csv')
 yuan_data.index = pd.to_datetime(yuan_data['trade_date'], format='%Y%m%d') 
 yuan_data = yuan_data.loc[:, ['open', 'high', 'low', 'close', 'amount']]
@@ -74,10 +78,7 @@ data.index = pd.to_datetime(data['trade_date'])
 data = data.drop('trade_date', axis=1)
 
 Lt = pd.read_csv('../temp/ARIMA.csv')
-# 划分训练集和测试集
-dataSize = yuan_data.shape[0]
-split_radio = 0.95
-idx = int(dataSize*split_radio)
+idx = create_data_index(data)
 
 # 数据集划分
 training_set = data.iloc[1:idx, :]
@@ -121,7 +122,6 @@ yuna_X_test = yuan_X_test.reshape(yuan_X_test.shape[0], yuan_X_test.shape[1], 5)
 
 # 模型构建
 model, yuan_model = lstm(model_type, X_train, yuan_X_train)
-print(model.summary())
 # 使用 Adam 优化器和均方误差（MSE）损失函数编译模型
 adam = Adam(learning_rate=0.01)
 model.compile(optimizer=adam,
@@ -199,7 +199,6 @@ finalpredicted_stock_price = finalpredicted_stock_price.drop(['trade_date'], axi
 
 # 绘制预测结果图与实际结果图进行模型预测分析
 plt.figure(figsize=(10, 6))
-# print('yuan_real', yuan_real_stock_price1)
 plt.plot(yuan_data.iloc[idx+1:, :]['close'], label='Stock Price')
 plt.plot(finalpredicted_stock_price['close'], label='Predicted Stock Price')
 plt.title('BiLSTM: Stock Price Prediction with ARIMA Residuals')
