@@ -151,3 +151,18 @@ def xgboost_forecast(train, testX):
     # make a one-step prediction
     yhat = model.predict(np.asarray([testX]))
     return yhat[0]
+
+def check_same_length(y1, y2):
+    if len(y1) != len(y2):
+        min_length = min(len(y1), len(y2))
+        y1 = y1[:min_length]
+        y2 = y2[:min_length]
+    return y1, y2
+
+def getData():
+    data = pd.read_csv('../dataset/01810.HK.csv')
+    return data
+
+def getResiduals():
+    data = pd.read_csv('../temp/ARIMA_residuals1.csv')
+    return data

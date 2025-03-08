@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 from keras.optimizers import Adam
 from util.utils import *
 
-data = pd.read_csv("../dataset/601988.SH.csv")
+data = getData()
 data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
 data = data.loc[:, ['open', 'high', 'low', 'close', 'vol', 'amount']]
 
-residuals = pd.read_csv('../temp/ARIMA_residuals1.csv')
+residuals = getResiduals()
 residuals.index = pd.to_datetime(residuals['trade_date'])
 residuals.pop('trade_date')
 
@@ -56,11 +56,14 @@ y_hat, y_test = PredictWithData(test_data, data_yuan, 'close', '../temp/stock_mo
 y_hat = np.array(y_hat, dtype='float64')
 y_test = np.array(y_test, dtype='float64')
 
+time = pd.Series(data.index[idx-1:])
+time, y_test = check_same_length(time, y_test)
+time, y_hat = check_same_length(time, y_hat)
+
 # 模型评估
 evaluation_metric(y_test, y_hat)
 
 # 绘制预测结果对比图
-time = pd.Series(data.index[idx-1:])
 plt.plot(time, y_test, label='True')
 plt.plot(time, y_hat, label='Prediction')
 plt.title('Hybrid model prediction')

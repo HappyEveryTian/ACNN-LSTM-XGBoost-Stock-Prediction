@@ -1,13 +1,9 @@
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import tensorflow as tf
-from keras.layers import Dense, LSTM, Bidirectional
-from keras.models import Sequential
 from keras.optimizers import Adam
 from numpy.random import seed
 from sklearn.preprocessing import MinMaxScaler
-from util.utils import evaluation_metric, create_data_index
+from util.utils import *
 
 # 检查是否有可用的 GPU 设备。如果有，设置 GPU 内存动态增长，避免一次性占用所有 GPU 内存，并只使用第一块 GPU
 gpus = tf.config.experimental.list_physical_devices("GPU")
@@ -69,11 +65,11 @@ n_batch = 32        # 批次
 model_type = 3      # 模型类型
 
 # 读取数据
-yuan_data = pd.read_csv('../dataset/601988.SH.csv')
+yuan_data = getData()
 yuan_data.index = pd.to_datetime(yuan_data['trade_date'], format='%Y%m%d') 
 yuan_data = yuan_data.loc[:, ['open', 'high', 'low', 'close', 'amount']]
 
-data = pd.read_csv('../temp/ARIMA_residuals1.csv')
+data = getResiduals()
 data.index = pd.to_datetime(data['trade_date'])
 data = data.drop('trade_date', axis=1)
 
@@ -217,5 +213,8 @@ plt.legend()
 plt.show()
 
 yhat = yuan_data.iloc[idx+1:, :]['close']
+
+finalpredicted_stock_price, yhat = check_same_length(finalpredicted_stock_price, yhat)
+
 # 模型评估
 evaluation_metric(finalpredicted_stock_price['close'], yhat)

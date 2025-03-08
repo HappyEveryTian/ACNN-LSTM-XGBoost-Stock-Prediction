@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from util.utils import *
 
-data = pd.read_csv('../dataset/601988.SH.csv')
+data = getData()
 data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
 data = data.loc[:, ['open', 'high', 'low', 'close', 'vol', 'amount']]
 
@@ -12,11 +12,10 @@ data.insert(5, 'close', close)
 idx = create_data_index(data)
 
 data1 = data.iloc[idx+1:, 5]
-residuals = pd.read_csv('../temp/ARIMA_residuals1.csv')
+residuals = getResiduals()
 residuals.index = pd.to_datetime(residuals['trade_date'])
 residuals.pop('trade_date')
 merge_data = pd.merge(data, residuals, on='trade_date')
-#merge_data = merge_data.drop(labels='2007-01-04', axis=0)
 time = pd.Series(data.index[idx+1:])
 
 Lt = pd.read_csv('../temp/ARIMA.csv')
@@ -27,6 +26,10 @@ Lt = Lt.flatten().tolist()
 train, test = prepare_data(merge_data, n_test=180, n_in=6, n_out=1)
 
 y, yhat = walk_forward_validation(train, test)
+
+time, y = check_same_length(time, y)
+time, yhat = check_same_length(time, yhat)
+
 plt.figure(figsize=(10, 6))
 plt.plot(time, y, label='Residuals')
 plt.plot(time, yhat, label='Predicted Residuals')
