@@ -89,26 +89,33 @@ def getResiduals():
 def load_data(ts_code):
     # 获取数据集
     pro = ts.pro_api('bacd53cd2890aac36761bcf9a29ea6b60d061bce134c8c880b4a9dc9')
+
     # 拉取数据
-    df = pro.hk_daily(**{
+    df = pro.hk_daily_adj(**{
         "ts_code": ts_code,
         "trade_date": "",
         "start_date": "",
         "end_date": "",
+        "offset": "",
         "limit": "",
-        "offset": ""
+        "symbol": ""
     }, fields=[
         "ts_code",
         "trade_date",
+        "close",
         "open",
         "high",
         "low",
-        "close",
         "pre_close",
         "change",
-        "pct_chg",
+        "pct_change",
         "vol",
-        "amount"
+        "amount",
+        "turnover_ratio",
+        "free_share",
+        "total_share",
+        "free_mv",
+        "total_mv"
     ])
 
     df = pd.DataFrame(df)

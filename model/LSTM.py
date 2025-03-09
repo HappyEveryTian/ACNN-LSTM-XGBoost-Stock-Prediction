@@ -213,8 +213,11 @@ plt.legend()
 plt.show()
 
 yhat = yuan_data.iloc[idx+1:, :]['close']
+yhat2 = yuan_real_stock_price1['close']
 
 finalpredicted_stock_price, yhat = check_same_length(finalpredicted_stock_price, yhat)
+yuan_predicted_stock_price1, yhat2 = check_same_length(yuan_predicted_stock_price1, yhat2)
 
 # 模型评估
 evaluation_metric(finalpredicted_stock_price['close'], yhat)
+evaluation_metric(yuan_predicted_stock_price1['close'], yhat2)
