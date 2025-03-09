@@ -5,7 +5,6 @@ import tushare as ts
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
-
 from util.datautil import evaluation_metric, getData
 
 """

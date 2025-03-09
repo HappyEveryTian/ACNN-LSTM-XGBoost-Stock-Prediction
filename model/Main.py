@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from keras.optimizers import Adam
 from util.datautil import *
+from util.modelutil import *
 
 data = getData()
 data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')

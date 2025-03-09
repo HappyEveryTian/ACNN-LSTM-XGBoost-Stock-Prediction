@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from util.datautil import *
+from util.modelutil import walk_forward_validation
 
 data = getData()
 data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
