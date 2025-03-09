@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from keras.optimizers import Adam
+
 from util.datautil import *
 
 data = getData()
@@ -33,7 +33,7 @@ train_X, _ = create_dataset(train_data, TIME_STEPS)
 _, train_Y = create_dataset(pollution_data, TIME_STEPS)
 
 # 构建注意力模型
-m = attention_model(input_dims=7)
+m = cnn_lstm_model(input_dims=7)
 model = build_model(m, train_X, train_Y, normalize)
 
 plt.plot(model.history['loss'], label='Training Loss')
@@ -43,7 +43,7 @@ plt.legend()
 plt.show()
 
 # 使用混合模型预测并通过XGBoost调优
-y_hat, y_test = PredictWithData(test_data, data_yuan, 'close', attention_model(input_dims=7), '../temp/stock_model.h5',
+y_hat, y_test = PredictWithData(test_data, data_yuan, 'close', cnn_lstm_model(input_dims=7), '../temp/stock_model.h5',
                                 use_xgb=True)
 y_hat = np.array(y_hat, dtype='float64')
 y_test = np.array(y_test, dtype='float64')

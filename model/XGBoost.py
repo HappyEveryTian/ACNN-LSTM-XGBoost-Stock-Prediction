@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from util.utils import *
+from util.datautil import *
 
 data = getData()
 data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
@@ -23,7 +23,7 @@ Lt = Lt.drop('trade_date', axis=1)
 Lt = np.array(Lt)
 Lt = Lt.flatten().tolist()
 
-train, test = prepare_data(merge_data, n_test=180, n_in=6, n_out=1)
+train, test = prepare_data(merge_data, n_in=6, n_out=1)
 
 y, yhat = walk_forward_validation(train, test)
 
@@ -40,7 +40,9 @@ plt.legend()
 plt.show()
 
 finalpredicted_stock_price = [i + j for i, j in zip(Lt, yhat)]
+
 evaluation_metric(data1, finalpredicted_stock_price)
+
 plt.figure(figsize=(10, 6))
 plt.plot(time, data1, label='Stock Price')
 plt.plot(time, finalpredicted_stock_price, label='Predicted Stock Price')

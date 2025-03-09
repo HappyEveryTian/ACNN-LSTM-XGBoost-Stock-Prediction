@@ -6,7 +6,7 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
 
-from util.utils import evaluation_metric, getData
+from util.datautil import evaluation_metric, getData
 
 """
 数据集文件来自沪深股票的每日指标类型

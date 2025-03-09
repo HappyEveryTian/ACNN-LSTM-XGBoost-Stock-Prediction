@@ -3,7 +3,7 @@ import tensorflow as tf
 from keras.optimizers import Adam
 from numpy.random import seed
 from sklearn.preprocessing import MinMaxScaler
-from util.utils import *
+from util.datautil import *
 
 # 检查是否有可用的 GPU 设备。如果有，设置 GPU 内存动态增长，避免一次性占用所有 GPU 内存，并只使用第一块 GPU
 gpus = tf.config.experimental.list_physical_devices("GPU")
