@@ -58,7 +58,7 @@ evaluation_metric(y_test, y_hat)
 # 绘制预测结果对比图
 plt.plot(time, y_test, label='True')
 plt.plot(time, y_hat, label='Prediction')
-plt.title('Hybrid model prediction')
+plt.title('cnn-lstm model prediction')
 plt.xlabel('Time', fontsize=12, verticalalignment='top')
 plt.ylabel('Price', fontsize=14, horizontalalignment='center')
 plt.legend()
