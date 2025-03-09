@@ -1,46 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import tushare as ts
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
-from util.datautil import evaluation_metric, getData
+from util.datautil import evaluation_metric, getData, load_data
 
-"""
-数据集文件来自沪深股票的每日指标类型
-"""
-
-# # 获取数据集
-# pro = ts.pro_api('bacd53cd2890aac36761bcf9a29ea6b60d061bce134c8c880b4a9dc9')
-# # 拉取数据
-# df = pro.hk_daily(**{
-#     "ts_code": "01810.HK",
-#     "trade_date": "",
-#     "start_date": "",
-#     "end_date": "",
-#     "limit": "",
-#     "offset": ""
-# }, fields=[
-#     "ts_code",
-#     "trade_date",
-#     "open",
-#     "high",
-#     "low",
-#     "close",
-#     "pre_close",
-#     "change",
-#     "pct_chg",
-#     "vol",
-#     "amount"
-# ])
-#
-# df = pd.DataFrame(df)
-# df['ts_code'] = '01810.HK'
-# df = df.iloc[::-1]
-# df.reset_index(drop=True, inplace=True)
-# df.to_csv('../dataset/01810.HK.csv')
-# print(df)
+# load_data('01810.HK')
 
 # 读取数据集
 data = getData()

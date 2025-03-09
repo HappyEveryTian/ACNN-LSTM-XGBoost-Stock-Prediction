@@ -1,6 +1,7 @@
 import pandas as pd
 from keras.layers.core import *
 from sklearn import metrics
+import tushare as ts
 
 def evaluation_metric(y_test, y_hat):
     mse = metrics.mean_squared_error(y_test, y_hat)
@@ -84,3 +85,34 @@ def getData():
 def getResiduals():
     data = pd.read_csv('../temp/ARIMA_residuals1.csv')
     return data
+
+def load_data(ts_code):
+    # 获取数据集
+    pro = ts.pro_api('bacd53cd2890aac36761bcf9a29ea6b60d061bce134c8c880b4a9dc9')
+    # 拉取数据
+    df = pro.hk_daily(**{
+        "ts_code": ts_code,
+        "trade_date": "",
+        "start_date": "",
+        "end_date": "",
+        "limit": "",
+        "offset": ""
+    }, fields=[
+        "ts_code",
+        "trade_date",
+        "open",
+        "high",
+        "low",
+        "close",
+        "pre_close",
+        "change",
+        "pct_chg",
+        "vol",
+        "amount"
+    ])
+
+    df = pd.DataFrame(df)
+    df['ts_code'] = ts_code
+    df = df.iloc[::-1]
+    df.reset_index(drop=True, inplace=True)
+    df.to_csv('../dataset/' + ts_code + '.csv')
