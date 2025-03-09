@@ -6,7 +6,7 @@ from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
 from util.datautil import evaluation_metric, getData, load_data
 
-# load_data('01810.HK')
+load_data('00003.HK')
 
 # 读取数据集
 data = getData()

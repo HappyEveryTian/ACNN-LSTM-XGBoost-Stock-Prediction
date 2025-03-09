@@ -79,7 +79,7 @@ def check_same_length(y1, y2):
     return y1, y2
 
 def getData():
-    data = pd.read_csv('../dataset/01810.HK.csv')
+    data = pd.read_csv('../dataset/00003.HK.csv')
     return data
 
 def getResiduals():
@@ -91,32 +91,7 @@ def load_data(ts_code):
     pro = ts.pro_api('bacd53cd2890aac36761bcf9a29ea6b60d061bce134c8c880b4a9dc9')
 
     # 拉取数据
-    df = pro.hk_daily_adj(**{
-        "ts_code": ts_code,
-        "trade_date": "",
-        "start_date": "",
-        "end_date": "",
-        "offset": "",
-        "limit": "",
-        "symbol": ""
-    }, fields=[
-        "ts_code",
-        "trade_date",
-        "close",
-        "open",
-        "high",
-        "low",
-        "pre_close",
-        "change",
-        "pct_change",
-        "vol",
-        "amount",
-        "turnover_ratio",
-        "free_share",
-        "total_share",
-        "free_mv",
-        "total_mv"
-    ])
+    df = pro.hk_daily(ts_code='00003.HK', start_date="19950302")
 
     df = pd.DataFrame(df)
     df['ts_code'] = ts_code
