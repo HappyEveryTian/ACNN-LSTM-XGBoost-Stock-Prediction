@@ -6,7 +6,7 @@ from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
 from util.datautil import evaluation_metric, getData, load_data
 
-load_data('00003.HK')
+# load_data('00003.HK')
 
 # 读取数据集
 data = getData()
@@ -89,7 +89,7 @@ history = [x for x in train_set['close']]
 predictions = list()
 for t in range(test_set.shape[0]):
     # 根据p,d,q参数设置模型并进行训练
-    model1 = ARIMA(history, order=(1, 1, 0))
+    model1 = ARIMA(history, order=(1, 1, 1))
     model_fit = model1.fit()
     yhat = model_fit.forecast(steps=1)  # 预测一步
     yhat = np.float64(yhat[0])  # 提取预测值
@@ -118,7 +118,7 @@ plt.show()
 evaluation_metric(test_set['close'], predictions)
 
 # 拟合ARIMA模型并提取残差
-model1 = ARIMA(endog=data['close'], order=(1, 1, 0)).fit()
+model1 = ARIMA(endog=data['close'], order=(1, 1, 1)).fit()
 residuals = pd.DataFrame(model1.resid)
 fig, ax = plt.subplots(1, 2)
 residuals.plot(title="Residuals", ax=ax[0])

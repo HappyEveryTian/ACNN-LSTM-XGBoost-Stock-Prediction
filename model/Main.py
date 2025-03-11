@@ -44,7 +44,7 @@ plt.show()
 
 # 使用混合模型预测并通过XGBoost调优
 y_hat, y_test = PredictWithData(test_data, data_yuan, 'close', attention_model(input_dims=7), '../temp/stock_model.h5',
-                                use_xgb=True)
+                                use_xgb=False)
 y_hat = np.array(y_hat, dtype='float64')
 y_test = np.array(y_test, dtype='float64')
 
