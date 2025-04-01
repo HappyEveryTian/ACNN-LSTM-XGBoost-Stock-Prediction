@@ -4,12 +4,12 @@ import pandas as pd
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
-from util.datautil import evaluation_metric, getData, load_data
+from util.datautil import evaluation_metric, getOriginData, load_data, create_data_index
 
 # load_data('00003.HK')
 
 # 读取数据集
-data = getData()
+data = getOriginData()
 dataSize = data.shape[0] # 获取数据集大小
 print(data)
 
@@ -26,10 +26,11 @@ def reset_index_for_dataset(dataset):
 # 划分训练集和测试集
 split_radio = 0.95    # 选取前95%数据为训练集，后5%数据为测试集
 
-train_set = data.loc[:int(dataSize*split_radio)]
+idx = create_data_index(data)
+train_set = data[:idx]
 train_set = reset_index_for_dataset(train_set)
 
-test_set = data.loc[int(dataSize*split_radio)+1:]
+test_set = data[idx:]
 test_set = reset_index_for_dataset(test_set)
 
 data = reset_index_for_dataset(data)
@@ -46,7 +47,7 @@ plt.ylabel('close', fontsize=14, horizontalalignment='center')
 plt.legend()
 plt.show()
 
-stock_data = train_set['close']
+stock_data = data['close']
 
 # 检验数据是否平稳
 result = adfuller(stock_data)
@@ -58,7 +59,7 @@ global temp1
 if result[1] > 0.05:
     print("数据非平稳，进行差分处理。")
     # 进行差分
-    temp1 = np.diff(train_set['close'], n=1)
+    temp1 = np.diff(data['close'], n=1)
 
     # 绘制差分后的数据
     plt.figure(figsize=(10, 6))
@@ -80,7 +81,7 @@ else:
     print("数据已平稳，无需差分处理。")
 
 # 绘制ACF和PACF图，选择p和q
-temp1 = np.diff(train_set['close'], n=1)
+temp1 = np.diff(data['close'], n=1)
 plot_acf(temp1)
 plot_pacf(temp1)
 plt.show()
@@ -97,7 +98,6 @@ for t in range(test_set.shape[0]):
     # 将实际值添加到history，以便下次迭代使用
     history.append(test_set['close'][t])
 
-# 绘制预测结果图与实际结果图进行模型预测分析
 predictions1 = {
     'trade_date': test_set.index[:],
     'close': predictions

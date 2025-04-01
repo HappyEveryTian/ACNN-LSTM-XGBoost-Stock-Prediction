@@ -12,6 +12,7 @@ def evaluation_metric(y_test, y_hat):
     print('RMSE: %.5f' % rmse)
     print('MAE: %.5f' % mae)
     print('R2: %.5f' % r2)
+    return { 'mse': '%.5f' % mse, 'rmse': '%.5f' % rmse, 'mae': '%.5f' % mae, 'r2': '%.5f' % r2 }
 
 def NormalizeMult(data):
     data = np.array(data)
@@ -27,6 +28,17 @@ def NormalizeMult(data):
             for j in range(0, data.shape[0]):
                 data[j, i] = (data[j, i] - listlow) / delta
     return data, normalize
+
+def InverseNormalizeMult(normalized_data, normalize):
+    inversed_data = np.copy(normalized_data)
+    for i in range(0, normalized_data.shape[1]):
+        listlow = normalize[i, 0]
+        listhigh = normalize[i, 1]
+        delta = listhigh - listlow
+        if delta != 0:
+            for j in range(0, normalized_data.shape[0]):
+                inversed_data[j, i] = normalized_data[j, i] * delta + listlow
+    return inversed_data
 
 def create_dataset(dataset, look_back=20):
     datax, datay = [], []
@@ -78,8 +90,15 @@ def check_same_length(y1, y2):
         y2 = y2[:min_length]
     return y1, y2
 
-def getData():
+def getOriginData():
     data = pd.read_csv('../dataset/601988.SH.csv')
+    return data
+
+def getData():
+    data = getOriginData()
+    data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
+    data = data.loc[:, ['open', 'high', 'low', 'close', 'vol', 'amount']]
+    data = data.fillna(method="ffill")
     return data
 
 def getResiduals():

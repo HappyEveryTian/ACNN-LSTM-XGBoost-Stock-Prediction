@@ -4,26 +4,60 @@ from keras.layers.core import *
 from keras.layers.recurrent import LSTM
 from keras.models import *
 from keras.optimizers import Adam
+from keras.regularizers import l2
+
 from util.datautil import NormalizeMult, create_dataset, prepare_data
+
+
+class Attention(Layer):
+    def __init__(self, **kwargs):
+        super(Attention, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.W = self.add_weight(name='attention_weight', shape=(input_shape[-1], input_shape[-1]),
+                                 initializer='glorot_uniform', trainable=True)
+        self.b = self.add_weight(name='attention_bias', shape=(input_shape[-1],), initializer='zeros', trainable=True)
+        super(Attention, self).build(input_shape)
+
+    def call(self, x):
+        e = K.tanh(K.dot(x, self.W) + self.b)
+        a = K.softmax(e, axis=1)
+        output = x * a
+        return K.sum(output, axis=1)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[0], input_shape[-1]
+
+def lstm(input_dims, time_steps = 10, model_type = 3, units = 64):
+    global lstm_out
+    inputs = Input(shape=(time_steps, input_dims))
+    if model_type == 1:
+        lstm_out = LSTM(units=units, activation='relu', return_sequences=True)(inputs)
+    if model_type == 2:
+        lstm_out = LSTM(units=units, activation='relu', return_sequences=True)(inputs)
+        lstm_out = LSTM(units=units, activation='relu', return_sequences=True)(lstm_out)
+    if model_type == 3:
+        lstm_out = Bidirectional(LSTM(units=units, activation='relu', return_sequences=True))(inputs)
+    flatten_out = Flatten()(lstm_out)
+    model_out = Dense(1, activation='sigmoid')(flatten_out)
+    model = Model(inputs=[inputs], outputs=model_out)
+    return model
 
 def cnn_lstm_model(input_dims = 13, time_steps = 20, lstm_units = 64):
     inputs = Input(shape=(time_steps, input_dims))
+    x = Conv1D(filters=32, kernel_size=3, activation='relu')(inputs)
 
-    x = Conv1D(filters=64, kernel_size=1, activation='relu')(inputs)  # 一维卷积
-    x = Dropout(0.3)(x)  # 防止过拟合
-
-    lstm_out = Bidirectional(LSTM(lstm_units, return_sequences=False))(x)  # 双向LSTM
-    lstm_out = Dropout(0.3)(lstm_out)
-
-    output = Dense(1, activation='sigmoid')(lstm_out)  # 全连接层
+    lstm_out = Bidirectional(LSTM(lstm_units, activation='relu', return_sequences=True))(x)
+    attention_mul = Flatten()(lstm_out)
+    output = Dense(1, activation='sigmoid')(attention_mul)
     model = Model(inputs=[inputs], outputs=output)
     return model
 
-def attention_model(input_dims = 13, time_steps = 20, lstm_units = 64):
+def attention_model(input_dims = 6, time_steps = 20, lstm_units = 64):
     inputs = Input(shape=(time_steps, input_dims))
 
-    x = Conv1D(filters=64, kernel_size=1, activation='relu')(inputs)  # 一维卷积
-    x = Dropout(0.3)(x)     # 防止过拟合
+    x = Conv1D(filters=64, kernel_size=3, activation='relu')(inputs)  # 一维卷积
+    x = Dropout(0.3)(x)
 
     lstm_out = Bidirectional(LSTM(lstm_units, return_sequences=True))(x)    # 双向LSTM
     lstm_out = Dropout(0.3)(lstm_out)
@@ -33,6 +67,25 @@ def attention_model(input_dims = 13, time_steps = 20, lstm_units = 64):
     output = Dense(1, activation='sigmoid')(attention_mul)  # 全连接层
     model = Model(inputs=[inputs], outputs=output)
     return model
+
+def attention_3d_block(inputs):
+    time_steps = K.int_shape(inputs)[1]
+    a = Permute((2, 1))(inputs)
+    a = Dense(time_steps, activation='softmax')(a)
+
+    a_probs = Permute((2, 1))(a)
+    output_attention_mul = Multiply()([inputs, a_probs])
+    return output_attention_mul
+    # features = K.int_shape(inputs)[-1]
+    #
+    # # 对每个特征独立生成时间步权重
+    # a = Conv1D(filters=1, kernel_size=1, activation='tanh', use_bias=False)(inputs)  # (batch, time_steps, 1)
+    # a = Flatten()(a)  # (batch, time_steps)
+    # a = Activation('softmax')(a)  # 时间步权重
+    # a = RepeatVector(features)(a)  # (batch, features, time_steps)
+    # a = Permute((2, 1))(a)  # (batch, time_steps, features)
+    #
+    # return Multiply()([inputs, a])
 
 def PredictWithData(data, data_yuan, name, model, modelname, use_xgb = True):
     yindex = data.columns.get_loc(name)
@@ -51,19 +104,6 @@ def PredictWithData(data, data_yuan, name, model, modelname, use_xgb = True):
     if use_xgb:
         y_hat, testy = xgb_scheduler(data_yuan)
     return y_hat, testy
-
-def attention_3d_block(inputs, single_attention_vector = False):
-    time_steps = K.int_shape(inputs)[1]
-    input_dim = K.int_shape(inputs)[2]
-    a = Permute((2, 1))(inputs)
-    a = Dense(time_steps, activation='softmax')(a)
-    if single_attention_vector:
-        a = Lambda(lambda x: K.mean(x, axis=1))(a)
-        a = RepeatVector(input_dim)(a)
-
-    a_probs = Permute((2, 1))(a)
-    output_attention_mul = Multiply()([inputs, a_probs])
-    return output_attention_mul
 
 def xgb_scheduler(data):
     close = data.pop('close')

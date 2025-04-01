@@ -11,52 +11,6 @@ if gpus:
     tf.config.experimental.set_memory_growth(gpus[0], True)
     tf.config.set_visible_devices([gpus[0]], "GPU")
 
-seed(1)
-tf.random.set_seed(1)
-
-def lstm(model_type, X_train, yuan_X_train):
-    #      model type：
-    #            1. single-layer LSTM
-    #            2. multi-layer LSTM
-    #            3. bidirectional LSTM
-    global residual_lstm_model
-    if model_type == 1:
-        # 单层 LSTM
-        residual_lstm_model = Sequential()
-        residual_lstm_model.add(LSTM(units=50, activation='relu',
-                                     input_shape=(X_train.shape[1], 1)))
-        residual_lstm_model.add(Dense(units=1))
-        original_lstm_model = Sequential()
-        original_lstm_model.add(LSTM(units=50, activation='relu',
-                    input_shape=(yuan_X_train.shape[1], 5)))
-        original_lstm_model.add(Dense(units=5))
-    if model_type == 2:
-        # 双层 LSTM
-        residual_lstm_model = Sequential()
-        residual_lstm_model.add(LSTM(units=50, activation='relu', return_sequences=True,
-                                     input_shape=(X_train.shape[1], 1)))
-        residual_lstm_model.add(LSTM(units=50, activation='relu'))
-        residual_lstm_model.add(Dense(1))
-
-        original_lstm_model = Sequential()
-        original_lstm_model.add(LSTM(units=50, activation='relu', return_sequences=True,
-                    input_shape=(yuan_X_train.shape[1], 5)))
-        original_lstm_model.add(LSTM(units=50, activation='relu'))
-        original_lstm_model.add(Dense(5))
-    if model_type == 3:
-        # 双向LSTM
-        residual_lstm_model = Sequential()
-        residual_lstm_model.add(Bidirectional(LSTM(50, activation='relu'),
-                                              input_shape=(X_train.shape[1], 1)))
-        residual_lstm_model.add(Dense(1))
-
-        original_lstm_model = Sequential()
-        original_lstm_model.add(Bidirectional(LSTM(50, activation='relu'),
-                                    input_shape=(yuan_X_train.shape[1], 5)))
-        original_lstm_model.add(Dense(5))
-
-    return residual_lstm_model, original_lstm_model
-
 # 设置LSTM模型类型及参数
 n_timestamp = 10    # 时间步
 n_features = 1      # 特征
@@ -65,7 +19,7 @@ n_batch = 32        # 批次
 model_type = 3      # 模型类型
 
 # 读取数据
-yuan_data = getData()
+yuan_data = getOriginData()
 yuan_data.index = pd.to_datetime(yuan_data['trade_date'], format='%Y%m%d') 
 yuan_data = yuan_data.loc[:, ['open', 'high', 'low', 'close', 'amount']]
 
@@ -217,9 +171,6 @@ yhat2 = yuan_real_stock_price1['close']
 
 finalpredicted_stock_price, yhat = check_same_length(finalpredicted_stock_price, yhat)
 yuan_predicted_stock_price1, yhat2 = check_same_length(yuan_predicted_stock_price1, yhat2)
-
-print(yuan_predicted_stock_price1['close'].head(20))
-print(yhat2.head(20))
 
 # 模型评估
 evaluation_metric(finalpredicted_stock_price['close'], yhat)

@@ -3,8 +3,6 @@ from util.datautil import *
 from util.modelutil import walk_forward_validation
 
 data = getData()
-data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
-data = data.loc[:, ['open', 'high', 'low', 'close', 'vol', 'amount']]
 
 # 将'close'列调整到最后一列
 close = data.pop('close')

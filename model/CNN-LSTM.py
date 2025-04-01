@@ -3,12 +3,10 @@ from util.datautil import *
 from util.modelutil import *
 
 data = getData()
-data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
-data = data.loc[:, ['open', 'high', 'low', 'close', 'vol', 'amount']]
 
 residuals = getResiduals()
 residuals.index = pd.to_datetime(residuals['trade_date'])
-residuals.pop('trade_date')
+residuals = residuals.drop('trade_date', axis=1)
 
 # 原始数据副本
 data_yuan = data

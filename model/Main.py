@@ -3,8 +3,6 @@ from util.datautil import *
 from util.modelutil import *
 
 data = getData()
-data.index = pd.to_datetime(data['trade_date'], format='%Y%m%d')
-data = data.loc[:, ['open', 'high', 'low', 'close', 'vol', 'amount']]
 
 residuals = getResiduals()
 residuals.index = pd.to_datetime(residuals['trade_date'])
@@ -58,7 +56,7 @@ evaluation_metric(y_test, y_hat)
 # 绘制预测结果对比图
 plt.plot(time, y_test, label='True')
 plt.plot(time, y_hat, label='Prediction')
-plt.title('cnn-lstm-attention model prediction')
+plt.title('Hybrid model prediction')
 plt.xlabel('Time', fontsize=12, verticalalignment='top')
 plt.ylabel('Price', fontsize=14, horizontalalignment='center')
 plt.legend()
