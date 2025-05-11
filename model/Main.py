@@ -12,13 +12,13 @@ residuals = getResiduals()
 residuals.index = pd.to_datetime(residuals['trade_date'])
 residuals.pop('trade_date')
 
-# åŸå§‹æ•°æ®å‰¯æœ¬
+# Ô­Ê¼Êı¾İ¸±±¾
 data_yuan = data
 idx = create_data_index(data_yuan)
 
-# åˆå¹¶ARIMAæ¨¡å‹æ®‹å·®çš„æ•°æ®
+# ºÏ²¢ARIMAÄ£ĞÍ²Ğ²îµÄÊı¾İ
 data = pd.merge(data, residuals, on='trade_date')
-# å°†'close'åˆ—è°ƒæ•´åˆ°æœ€åä¸€åˆ—
+# ½«'close'ÁĞµ÷Õûµ½×îºóÒ»ÁĞ
 index = data.columns.shape[0] - 1
 close = data.pop('close')
 data.insert(index, 'close', close)
@@ -50,12 +50,12 @@ X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], input_dimens)
 X_test, Y_test = data_split(testing_set_scaled, time_steps)
 X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], input_dimens)
 
-m = attention_model(input_dims=input_dimens, time_steps=time_steps)
+m = hybrid_model(input_dims=input_dimens, time_steps=time_steps)
 adam = Adam(learning_rate=0.01)
-# ç¼–è¯‘æ¨¡å‹ï¼Œä½¿ç”¨å‡æ–¹è¯¯å·®ï¼ˆMSEï¼‰ä½œä¸ºæŸå¤±å‡½æ•°
+# ±àÒëÄ£ĞÍ£¬Ê¹ÓÃ¾ù·½Îó²î£¨MSE£©×÷ÎªËğÊ§º¯Êı
 m.compile(optimizer=adam, loss='mse')
 
-# è®­ç»ƒæ¨¡å‹
+# ÑµÁ·Ä£ĞÍ
 history = m.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test), validation_freq=1)
 
 plt.plot(history.history['loss'], label='Training Loss')
@@ -69,10 +69,10 @@ intermediate_layer_model = Model(inputs=m.input,
                                  outputs=m.get_layer(index=-2).output)
 x_train_features = intermediate_layer_model.predict(X_train)
 
-# æå–æµ‹è¯•é›†ç‰¹å¾
+# ÌáÈ¡²âÊÔ¼¯ÌØÕ÷
 x_test_features = intermediate_layer_model.predict(X_test)
 
-# è¿›è¡Œæ»šåŠ¨é¢„æµ‹
+# ½øĞĞ¹ö¶¯Ô¤²â
 predictions = []
 for i in range(len(x_test_features)):
     xgb_model = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=50)
@@ -89,7 +89,7 @@ y_pred_reshaped[:, -1] = predictions
 y_test_reshaped = np.zeros((len(Y_test), testing_set_scaled.shape[1]))
 y_test_reshaped[:, -1] = Y_test
 
-# è¿›è¡Œåå½’ä¸€åŒ–
+# ½øĞĞ·´¹éÒ»»¯
 y_hat = sc.inverse_transform(y_pred_reshaped)[:, -1]
 y_test = sc.inverse_transform(y_test_reshaped)[:, -1]
 
@@ -97,11 +97,11 @@ time = pd.Series(data.index[idx-1:])
 time, y_test = check_same_length(time, y_test)
 time, y_hat = check_same_length(time, y_hat)
 
-# æ¨¡å‹è¯„ä¼°
+# Ä£ĞÍÆÀ¹À
 metric = evaluation_metric(y_test, y_hat)
-logger.info(f"æ··åˆæ¨¡å‹æŒ‡æ ‡: {metric}")
+logger.info(f"»ìºÏÄ£ĞÍÖ¸±ê: {metric}")
 
-# ç»˜åˆ¶é¢„æµ‹ç»“æœå¯¹æ¯”å›¾
+# »æÖÆÔ¤²â½á¹û¶Ô±ÈÍ¼
 plt.plot(time, y_test, label='True')
 plt.plot(time, y_hat, label='Prediction')
 plt.title('Hybrid model prediction')

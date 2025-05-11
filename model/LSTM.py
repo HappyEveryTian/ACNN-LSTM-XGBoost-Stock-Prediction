@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 from keras.optimizers import Adam
 from sklearn.preprocessing import MinMaxScaler
-
 from util.datautil import *
 from util.logging_config import logger
 from util.modelutil import *
 
 data = getData()
+
 
 residuals = getResiduals()
 residuals.index = pd.to_datetime(residuals['trade_date'])
@@ -18,6 +18,13 @@ idx = create_data_index(data_yuan)
 
 # 合并ARIMA模型残差的数据
 data = pd.merge(data, residuals, on='trade_date')
+
+# 增加EMA指标
+data = ema_process(data, 'close')
+
+# 增加SMA指标处理缺失值
+data = sma_process(data, 'close')
+
 # 将'close'列调整到最后一列
 index = data.columns.shape[0] - 1
 close = data.pop('close')
@@ -54,9 +61,14 @@ X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], input_dimens)
 model = lstm_model(input_dims=input_dimens, time_steps=time_steps)
 adam = Adam(learning_rate=0.01)
 model.compile(optimizer=adam, loss='mse')
-
+time_callback = TimeCallback()
 # 训练模型
-history = model.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test), validation_freq=1)
+history = model.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test), callbacks=[time_callback])
+# 输出详细时间统计
+print("\nTime Statistics:")
+print(f"- Total training time: {sum(time_callback.epoch_times):.2f}s")
+print(f"- Average per epoch  : {sum(time_callback.epoch_times)/len(time_callback.epoch_times):.2f}s")
+print(f"- Per-epoch times    : {[round(t,2) for t in time_callback.epoch_times]}")
 
 plt.plot(history.history['loss'], label='Training Loss')
 plt.plot(history.history['val_loss'], label='Validation Loss')
