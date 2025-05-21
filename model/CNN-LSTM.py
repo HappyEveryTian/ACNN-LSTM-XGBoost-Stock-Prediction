@@ -29,8 +29,9 @@ index = data.columns.shape[0] - 1
 close = data.pop('close')
 data.insert(index, 'close', close)
 
+time_steps = 20
 train_data = data[1:idx]
-test_data = data[idx:]
+test_data = data[idx-time_steps:]
 
 def data_split(sequence, n_timestamp):
     X = []
@@ -44,7 +45,6 @@ def data_split(sequence, n_timestamp):
         y.append(seq_y)
     return np.array(X), np.array(y)
 
-time_steps = 20
 input_dimens = data.columns.shape[0] - 1
 
 sc = MinMaxScaler(feature_range=(0, 1))
@@ -81,14 +81,11 @@ predictions = model.predict(X_test)
 y_pred_reshaped = np.zeros((len(predictions), testing_set_scaled.shape[1]))
 y_pred_reshaped[:, -1] = predictions.flatten()
 
-y_test_reshaped = np.zeros((len(Y_test), testing_set_scaled.shape[1]))
-y_test_reshaped[:, -1] = Y_test
-
 # 进行反归一化
 y_hat = sc.inverse_transform(y_pred_reshaped)[:, -1]
-y_test = sc.inverse_transform(y_test_reshaped)[:, -1]
 
-time = pd.Series(data.index[idx-1:])
+time = pd.Series(data.index[idx:])
+y_test = data['close'][idx:]
 time, y_test = check_same_length(time, y_test)
 time, y_hat = check_same_length(time, y_hat)
 
@@ -97,6 +94,7 @@ metric = evaluation_metric(y_test, y_hat)
 logger.info(f"CNN-LSTM模型指标: {metric}")
 
 # 绘制预测结果对比图
+plt.figure(figsize=(10, 6))
 plt.plot(time, y_test, label='True')
 plt.plot(time, y_hat, label='Prediction')
 plt.title('CNN-LSTM model prediction')

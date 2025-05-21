@@ -59,7 +59,7 @@ def check_same_length(y1, y2):
     return y1, y2
 
 def getOriginData():
-    data = pd.read_csv('../dataset/00003.HK.csv')
+    data = pd.read_csv('../dataset/601988.SH.csv')
     return data
 
 def getData():

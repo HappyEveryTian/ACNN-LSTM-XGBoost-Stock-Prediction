@@ -12,19 +12,27 @@ residuals = getResiduals()
 residuals.index = pd.to_datetime(residuals['trade_date'])
 residuals.pop('trade_date')
 
-# Ô­Ê¼Êı¾İ¸±±¾
+# åŸå§‹æ•°æ®å‰¯æœ¬
 data_yuan = data
 idx = create_data_index(data_yuan)
 
-# ºÏ²¢ARIMAÄ£ĞÍ²Ğ²îµÄÊı¾İ
+# åˆå¹¶ARIMAæ¨¡å‹æ®‹å·®çš„æ•°æ®
 data = pd.merge(data, residuals, on='trade_date')
-# ½«'close'ÁĞµ÷Õûµ½×îºóÒ»ÁĞ
+
+# å¢åŠ EMAæŒ‡æ ‡
+data = ema_process(data, 'close')
+
+# å¢åŠ SMAæŒ‡æ ‡å¤„ç†ç¼ºå¤±å€¼
+data = sma_process(data, 'close')
+
+# å°†'close'åˆ—è°ƒæ•´åˆ°æœ€åä¸€åˆ—
 index = data.columns.shape[0] - 1
 close = data.pop('close')
 data.insert(index, 'close', close)
 
+time_steps = 20
 train_data = data[1:idx]
-test_data = data[idx:]
+test_data = data[idx-time_steps:]
 
 def data_split(sequence, n_timestamp):
     X = []
@@ -38,7 +46,6 @@ def data_split(sequence, n_timestamp):
         y.append(seq_y)
     return np.array(X), np.array(y)
 
-time_steps = 20
 input_dimens = data.columns.shape[0] - 1
 
 sc = MinMaxScaler(feature_range=(0, 1))
@@ -52,11 +59,11 @@ X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], input_dimens)
 
 m = hybrid_model(input_dims=input_dimens, time_steps=time_steps)
 adam = Adam(learning_rate=0.01)
-# ±àÒëÄ£ĞÍ£¬Ê¹ÓÃ¾ù·½Îó²î£¨MSE£©×÷ÎªËğÊ§º¯Êı
+# ç¼–è¯‘æ¨¡å‹ï¼Œä½¿ç”¨å‡æ–¹è¯¯å·®ï¼ˆMSEï¼‰ä½œä¸ºæŸå¤±å‡½æ•°
 m.compile(optimizer=adam, loss='mse')
 
-# ÑµÁ·Ä£ĞÍ
-history = m.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test), validation_freq=1)
+# è®­ç»ƒæ¨¡å‹
+history = m.fit(X_train, Y_train, epochs=150, batch_size=32, validation_data=(X_test, Y_test), validation_freq=1)
 
 plt.plot(history.history['loss'], label='Training Loss')
 plt.plot(history.history['val_loss'], label='Validation Loss')
@@ -69,10 +76,10 @@ intermediate_layer_model = Model(inputs=m.input,
                                  outputs=m.get_layer(index=-2).output)
 x_train_features = intermediate_layer_model.predict(X_train)
 
-# ÌáÈ¡²âÊÔ¼¯ÌØÕ÷
+# æå–æµ‹è¯•é›†ç‰¹å¾
 x_test_features = intermediate_layer_model.predict(X_test)
 
-# ½øĞĞ¹ö¶¯Ô¤²â
+# è¿›è¡Œæ»šåŠ¨é¢„æµ‹
 predictions = []
 for i in range(len(x_test_features)):
     xgb_model = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=50)
@@ -86,22 +93,20 @@ for i in range(len(x_test_features)):
 y_pred_reshaped = np.zeros((len(predictions), testing_set_scaled.shape[1]))
 y_pred_reshaped[:, -1] = predictions
 
-y_test_reshaped = np.zeros((len(Y_test), testing_set_scaled.shape[1]))
-y_test_reshaped[:, -1] = Y_test
-
-# ½øĞĞ·´¹éÒ»»¯
+# è¿›è¡Œåå½’ä¸€åŒ–
 y_hat = sc.inverse_transform(y_pred_reshaped)[:, -1]
-y_test = sc.inverse_transform(y_test_reshaped)[:, -1]
 
-time = pd.Series(data.index[idx-1:])
+time = pd.Series(data.index[idx:])
+y_test = data['close'][idx:]
 time, y_test = check_same_length(time, y_test)
 time, y_hat = check_same_length(time, y_hat)
 
-# Ä£ĞÍÆÀ¹À
+# æ¨¡å‹è¯„ä¼°
 metric = evaluation_metric(y_test, y_hat)
-logger.info(f"»ìºÏÄ£ĞÍÖ¸±ê: {metric}")
+logger.info(f"æ··åˆæ¨¡å‹æŒ‡æ ‡: {metric}")
 
-# »æÖÆÔ¤²â½á¹û¶Ô±ÈÍ¼
+# ç»˜åˆ¶é¢„æµ‹ç»“æœå¯¹æ¯”å›¾
+plt.figure(figsize=(10, 6))
 plt.plot(time, y_test, label='True')
 plt.plot(time, y_hat, label='Prediction')
 plt.title('Hybrid model prediction')

@@ -4,40 +4,18 @@ import pandas as pd
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.stattools import adfuller
-from util.datautil import evaluation_metric, getOriginData, load_data, create_data_index
+from util.datautil import evaluation_metric, load_data, create_data_index, check_same_length, getData
 from util.logging_config import logger
 
 # load_data('00003.HK')
 
 # 读取数据集
-data = getOriginData()
-dataSize = data.shape[0] # 获取数据集大小
-print(data)
-
-# 重新设置日期为数据集索引
-def reset_index_for_dataset(dataset):
-    dataset.index = pd.to_datetime(dataset['trade_date'], format='%Y%m%d')
-
-    dataset = dataset.drop(['ts_code', 'trade_date'], axis=1)  # 删除不需要的数据列方便分析
-
-    dataset = pd.DataFrame(dataset, dtype=np.float64)  # 将数据类型设置为64位浮点数
-
-    return dataset
+data = getData()
 
 # 划分训练集和测试集
-split_radio = 0.95    # 选取前95%数据为训练集，后5%数据为测试集
-
 idx = create_data_index(data)
 train_set = data[:idx]
-train_set = reset_index_for_dataset(train_set)
-
 test_set = data[idx:]
-test_set = reset_index_for_dataset(test_set)
-
-data = reset_index_for_dataset(data)
-
-print(train_set.head())
-print(test_set.head())
 
 plt.figure(figsize=(10, 6))
 plt.plot(train_set['close'], label='train_set')
@@ -92,7 +70,7 @@ plt.show()
 model1 = ARIMA(endog=train_set['close'], order=(1, 1, 1)).fit()
 train_residuals = model1.resid
 train_set['rediduals'] = train_residuals
-PRED_STEPS = 2  # 每次预测4个时间点
+PRED_STEPS = 3  # 每次预测PRED_STEPS个时间点
 TEST_SIZE = len(test_set)
 test_residuals = []
 predictions = []
@@ -106,7 +84,6 @@ for t in range(0, TEST_SIZE, PRED_STEPS):
     residuals = [actuals - pred for actuals, pred in zip(actuals, pred)]
     test_residuals.extend(residuals)
 predictions = predictions[:TEST_SIZE]
-print(predictions)
 
 predictions1 = {
     'trade_date': test_set.index[:],
@@ -115,9 +92,15 @@ predictions1 = {
 predictions1 = pd.DataFrame(predictions1)
 predictions1 = predictions1.set_index(['trade_date'], drop=True)
 predictions1.to_csv('../temp/ARIMA.csv')
+
+time = pd.Series(data.index[idx:])
+y_test = data['close'][idx:]
+time, y_test = check_same_length(time, y_test)
+time, y_hat = check_same_length(time, predictions1)
+
 plt.figure(figsize=(10, 6))
-plt.plot(test_set['close'], label='Stock Price')
-plt.plot(predictions1, label='Predicted Stock Price')
+plt.plot(time, y_test, label='Stock Price')
+plt.plot(time, y_hat, label='Predicted Stock Price')
 plt.title('ARIMA: Stock Price Prediction')
 plt.xlabel('Time', fontsize=12, verticalalignment='top')
 plt.ylabel('Close', fontsize=14, horizontalalignment='center')
@@ -128,7 +111,8 @@ plt.show()
 test_set['rediduals'] = test_residuals
 # 提取 test_residuals 中的单个数值
 test_residuals_values = [val[0] if isinstance(val, list) else val for val in test_residuals]
-train_residuals_df = pd.DataFrame(train_residuals, columns=['residuals'])
+train_residuals_df = pd.DataFrame(train_residuals, index=train_set.index, columns=['residuals'])
+train_residuals_df = train_residuals_df.fillna(0)
 test_residuals_df = pd.DataFrame(test_residuals_values, index=test_set.index, columns=['residuals'])
 residuals = pd.concat([train_residuals_df, test_residuals_df])
 residuals_df = pd.DataFrame(residuals)
@@ -139,5 +123,5 @@ plt.show()
 residuals_df.to_csv('../temp/ARIMA_residuals1.csv')
 
 # 计算误差指标
-metric = evaluation_metric(test_set['close'], predictions)
+metric = evaluation_metric(y_test, y_hat)
 logger.info(f"ARIMA模型指标: {metric}")

@@ -3,7 +3,7 @@ import logging
 # 创建一个名为 __name__ 的 logger
 logger = logging.getLogger(__name__)
 # 设置日志级别
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # 创建一个 FileHandler，将日志写入文件
 file_handler = logging.FileHandler('../model_metrics.log', encoding='utf-8')
